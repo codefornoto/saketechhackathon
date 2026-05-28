@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>日本酒 × TECH HACKATHON</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 和風フォント＆テック系フォントの読み込み -->
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Shippori+Mincho:wght@400;700;800&family=Yuji+Syuku&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      /* ベース */
+      --color-bg: #EAE6DB; /* 少し渋めの生成り */
+      --color-text: #111111; /* 漆黒 */
+      
+      /* 加賀五彩 (Kaga Gosai) */
+      --kaga-enji: #9d2b45; /* 臙脂 */
+      --kaga-ai: #234978; /* 藍 */
+      --kaga-oudo: #c69956; /* 黄土 */
+      --kaga-kusa: #597a59; /* 草 */
+      --kaga-murasaki: #6e557b; /* 古代紫 */
+      
+      /* ネオン用 (加賀五彩をベースに彩度を上げたもの) */
+      --neon-enji: #ff4772;
+      --neon-ai: #4793ff;
+      --neon-oudo: #ffc46b;
+      --neon-kusa: #85ff85;
+      --neon-murasaki: #dfacff;
+    }
+
+    body {
+      font-family: 'Shippori Mincho', serif;
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      overflow-x: hidden;
+      margin: 0;
+      /* 背景画像の指定 */
+      background-image: url('./images/bk.svg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+
+    .font-fude { font-family: 'Yuji Syuku', serif; }
+    .font-tech { font-family: 'Share Tech Mono', monospace; }
+
+    /* --- スプラッシュ画面用 アニメーション --- */
+    @keyframes fog-reveal {
+      0% {
+        opacity: 0;
+        filter: blur(20px);
+        transform: scale(1.05);
+      }
+      100% {
+        opacity: 1;
+        filter: blur(0);
+        transform: scale(1);
+      }
+    }
+    .animate-fog-reveal {
+      animation: fog-reveal 3.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+
+    @keyframes tap-fade-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes tap-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    .animate-tap {
+      opacity: 0;
+      animation: tap-fade-in 1.5s ease-out 2.5s forwards, tap-pulse 2.5s ease-in-out 4s infinite;
+    }
+
+    /* --- 古風な雲のアニメーション (画像版) --- */
+    .kumo-container {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      pointer-events: none; overflow: hidden;
+    }
+    .kumo { position: absolute; opacity: 0.8; object-fit: contain; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1)); }
+
+    @keyframes floatCloud { 0% { transform: translateX(-300px); } 100% { transform: translateX(100vw); } }
+    @keyframes floatCloudReverse { 0% { transform: translateX(100vw); } 100% { transform: translateX(-300px); } }
+
+    /* 背景側の雲 */
+    .kumo-bg { z-index: 0; opacity: 0.4; mix-blend-mode: multiply; }
+    .cloud-1 { top: 5%; height: 80px; animation: floatCloud 55s linear infinite; }
+    .cloud-2 { top: 35%; height: 120px; animation: floatCloudReverse 70s linear infinite; }
+    .cloud-3 { top: 60%; height: 100px; animation: floatCloud 65s linear infinite; }
+    .cloud-4 { top: 85%; height: 90px; animation: floatCloudReverse 80s linear infinite; }
+
+    /* 前景側の雲 */
+    .kumo-fg { z-index: 50; opacity: 0.9; }
+    .cloud-5 { top: 15%; height: 150px; animation: floatCloudReverse 90s linear infinite; }
+    .cloud-6 { top: 45%; height: 110px; animation: floatCloud 85s linear infinite; }
+    .cloud-7 { top: 75%; height: 140px; animation: floatCloudReverse 100s linear infinite; }
+    .cloud-8 { top: 90%; height: 130px; animation: floatCloud 110s linear infinite; }
+
+    /* --- デジタル・レイン (マトリックス風和風コード) --- */
+    .digital-rain-container {
+      position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; opacity: 0.15;
+    }
+    .rain-column {
+      position: absolute; top: -100%; width: 20px; text-align: center; font-size: 14px;
+      font-family: 'Share Tech Mono', monospace; color: var(--kaga-ai); font-weight: bold;
+      writing-mode: vertical-rl; text-orientation: upright;
+      animation: rainDown linear infinite;
+    }
+    @keyframes rainDown {
+      0% { transform: translateY(-10%); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(110vh); opacity: 0; }
+    }
+
+    /* --- グリッチエフェクト --- */
+    .glitch-wrapper { position: relative; display: inline-block; }
+    .glitch-img {
+      position: relative; z-index: 10;
+      animation: glitch-anim-1 4s infinite linear alternate-reverse;
+    }
+    .glitch-wrapper::before, .glitch-wrapper::after {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background-image: url('./images/logo.png'); background-size: contain; background-repeat: no-repeat; background-position: center;
+      opacity: 0.8; z-index: 9;
+    }
+    .glitch-wrapper::before {
+      left: 3px; text-shadow: -2px 0 var(--neon-enji); animation: glitch-anim-2 3s infinite linear alternate-reverse;
+      clip-path: polygon(0 20%, 100% 20%, 100% 30%, 0 30%);
+    }
+    .glitch-wrapper::after {
+      left: -3px; text-shadow: 2px 0 var(--neon-ai); animation: glitch-anim-3 2.5s infinite linear alternate-reverse;
+      clip-path: polygon(0 60%, 100% 60%, 100% 70%, 0 70%);
+    }
+
+    @keyframes glitch-anim-1 { 0%, 95% { transform: translate(0,0); filter: hue-rotate(0deg); } 96% { transform: translate(-2px, 2px); filter: hue-rotate(90deg); } 98% { transform: translate(2px, -2px); filter: hue-rotate(0deg); } 100% { transform: translate(0,0); } }
+    @keyframes glitch-anim-2 { 0%, 90% { clip-path: polygon(0 20%, 100% 20%, 100% 30%, 0 30%); transform: translate(0); } 92% { clip-path: polygon(0 10%, 100% 10%, 100% 15%, 0 15%); transform: translate(5px); } 94% { clip-path: polygon(0 80%, 100% 80%, 100% 90%, 0 90%); transform: translate(-5px); } 100% { clip-path: polygon(0 20%, 100% 20%, 100% 30%, 0 30%); transform: translate(0); } }
+    @keyframes glitch-anim-3 { 0%, 85% { clip-path: polygon(0 60%, 100% 60%, 100% 70%, 0 70%); transform: translate(0); } 87% { clip-path: polygon(0 40%, 100% 40%, 100% 45%, 0 45%); transform: translate(-4px); } 89% { clip-path: polygon(0 90%, 100% 90%, 100% 95%, 0 95%); transform: translate(4px); } 100% { clip-path: polygon(0 60%, 100% 60%, 100% 70%, 0 70%); transform: translate(0); } }
+
+    /* --- Cyberpunk風 和モダンカード (クリップパス) --- */
+    .cyber-kifuda {
+      background-color: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(4px);
+      border: 3px solid var(--color-text);
+      position: relative;
+      /* 角を落とす未来風デザイン */
+      clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 24px, 100% 100%, 24px 100%, 0 calc(100% - 24px));
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    .cyber-kifuda::before {
+      content: ''; position: absolute; top: 0; right: 0; width: 24px; height: 24px;
+      background: var(--kaga-oudo); clip-path: polygon(100% 0, 0 0, 100% 100%); transition: background 0.3s;
+    }
+    .cyber-kifuda::after {
+      content: ''; position: absolute; bottom: 0; left: 0; width: 24px; height: 24px;
+      background: var(--kaga-ai); clip-path: polygon(0 100%, 100% 100%, 0 0); transition: background 0.3s;
+    }
+    .cyber-kifuda:hover {
+      transform: translateY(-5px);
+      filter: drop-shadow(6px 6px 0px var(--neon-enji));
+    }
+    .cyber-kifuda:hover::before { background: var(--neon-oudo); }
+    .cyber-kifuda:hover::after { background: var(--neon-ai); }
+
+    /* その他共通・アニメーション */
+    @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .animate-spin-slow { animation: spin-slow 120s linear infinite; }
+    .modal-enter { animation: modalFadeIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    @keyframes modalFadeIn { from { opacity: 0; transform: translateY(40px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: var(--color-bg); border-left: 1px solid var(--color-text); }
+    ::-webkit-scrollbar-thumb { background: var(--kaga-oudo); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--neon-oudo); }
+    
+    .view-hidden { display: none !important; }
+    
+    .fade-in-scroll { opacity: 0; transform: translateY(3rem); transition: opacity 800ms ease-out, transform 800ms ease-out; }
+    .fade-in-scroll.visible { opacity: 1; transform: translateY(0); }
+
+    /* テック枠装飾 */
+    .tech-border {
+      position: relative; border: 2px solid var(--color-text);
+    }
+    .tech-border::before {
+      content: ''; position: absolute; top: -5px; left: -5px; width: 10px; height: 10px; border-top: 2px solid var(--color-text); border-left: 2px solid var(--color-text);
+    }
+    .tech-border::after {
+      content: ''; position: absolute; bottom: -5px; right: -5px; width: 10px; height: 10px; border-bottom: 2px solid var(--color-text); border-right: 2px solid var(--color-text);
+    }
+
+  </style>
+</head>
+<body class="selection:bg-[#9d2b45] selection:text-white pb-20 overflow-hidden" id="mainBody">
+
+  <!-- SPLASH VIEW (起動画面) -->
+  <div id="splashView" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[var(--color-bg)] transition-opacity duration-1000 ease-in-out" style="background-image: url('./images/bk.svg'); background-size: cover; background-position: center; background-attachment: fixed;">
+    <!-- スプラッシュ画面用の雲 -->
+    <div class="absolute inset-0 pointer-events-none overflow-hidden mix-blend-multiply opacity-60">
+      <img src="./images/cloud3.png" class="kumo top-[15%] h-[150px]" style="animation: floatCloud 50s linear infinite;" alt="">
+      <img src="./images/cloud7.png" class="kumo top-[65%] h-[200px]" style="animation: floatCloudReverse 60s linear infinite;" alt="">
+      <img src="./images/cloud1.png" class="kumo top-[85%] h-[100px]" style="animation: floatCloud 45s linear infinite;" alt="">
+    </div>
+
+    <!-- ロゴとスタートボタン -->
+    <div class="relative z-10 flex flex-col items-center w-full px-6">
+      <img src="./images/logo.png" alt="日本酒×TECH HACKATHON" class="w-full max-w-[600px] h-auto object-contain animate-fog-reveal drop-shadow-2xl" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'600\' height=\'250\'%3E%3Crect width=\'100%25\' height=\'100%25\' fill=\'transparent\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' font-family=\'serif\' font-size=\'50\' fill=\'%23111\' text-anchor=\'middle\' font-weight=\'bold\'%3E日本酒 x TECH%3C/text%3E%3C/svg%3E'">
+      
+      <button onclick="startApp()" class="mt-20 text-xl md:text-2xl font-bold tracking-widest text-[var(--color-text)] font-fude animate-tap border-2 border-[var(--color-text)] px-8 py-3 hover:text-white hover:bg-[var(--kaga-enji)] transition-colors cursor-pointer bg-white/70 backdrop-blur-sm shadow-[4px_4px_0px_var(--color-text)] tech-border">
+        タップしてスタート
+      </button>
+    </div>
+  </div>
+
+  <!-- 背景：デジタルレイン -->
+  <div class="digital-rain-container" id="digitalRain"></div>
+
+  <!-- 背景：古風な雲 (画像) -->
+  <div class="kumo-container kumo-bg">
+    <img src="./images/cloud1.png" class="kumo cloud-1" alt="雲">
+    <img src="./images/cloud2.png" class="kumo cloud-2" alt="雲">
+    <img src="./images/cloud3.png" class="kumo cloud-3" alt="雲">
+    <img src="./images/cloud4.png" class="kumo cloud-4" alt="雲">
+  </div>
+
+  <!-- HOME VIEW -->
+  <div id="homeView" class="relative min-h-[100dvh] flex flex-col items-center justify-center px-4 py-20 w-full overflow-hidden">
+    
+    <!-- 背景の装飾サークル（幾何学・サイバー） -->
+    <div class="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] md:w-[1200px] md:h-[1200px] animate-spin-slow pointer-events-none z-0 opacity-30">
+      <svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <circle cx="50" cy="50" r="48" fill="none" stroke="var(--kaga-enji)" stroke-width="0.5" stroke-dasharray="2,6"/>
+        <circle cx="50" cy="50" r="38" fill="none" stroke="var(--kaga-ai)" stroke-width="0.2" stroke-dasharray="1,3"/>
+        <polygon points="50,10 90,50 50,90 10,50" fill="none" stroke="var(--kaga-oudo)" stroke-width="0.1" />
+        <polygon points="50,20 80,50 50,80 20,50" fill="none" stroke="var(--kaga-kusa)" stroke-width="0.1" transform="rotate(45 50 50)" />
+      </svg>
+      <div id="rotatingPhotosContainer"></div>
+    </div>
+    
+    <div class="relative z-10 w-full max-w-5xl flex flex-col items-center">
+      
+      <!-- タイトルロゴ -->
+      <div class="text-center mb-16 md:mb-24 mt-4 flex flex-col items-center w-full overflow-visible relative">
+        <div class="absolute -top-10 left-1/2 -translate-x-1/2 font-tech text-[150px] font-bold text-gray-200/40 select-none z-0 tracking-tighter mix-blend-color-burn">
+          SAKE
+        </div>
+        
+        <div class="glitch-wrapper z-10 mx-auto w-[90%] max-w-[700px]">
+          <!-- ロゴ画像。読み込めない場合はaltテキストが表示されます -->
+          <img src="./images/logo.png" alt="日本酒×TECH HACKATHON" class="w-full h-auto glitch-img object-contain drop-shadow-2xl" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'600\' height=\'250\'%3E%3Crect width=\'100%25\' height=\'100%25\' fill=\'%23111\'/%3E%3Ctext x=\'50%25\' y=\'40%25\' font-family=\'monospace\' font-size=\'40\' fill=\'%23fff\' text-anchor=\'middle\' font-weight=\'bold\'%3E日本酒 x TECH%3C/text%3E%3Ctext x=\'50%25\' y=\'70%25\' font-family=\'monospace\' font-size=\'30\' fill=\'%239d2b45\' text-anchor=\'middle\' font-weight=\'bold\'%3EHACKATHON%3C/text%3E%3C/svg%3E'">
+        </div>
+        
+        <!-- サブタイトル的なリボン -->
+        <div class="mt-8 relative inline-block text-center border-2 border-dashed border-[var(--kaga-enji)] px-10 py-3 bg-[var(--kaga-ai)] transform rotate-1 shadow-[4px_4px_0px_var(--kaga-oudo)] tech-border">
+          <p class="text-lg md:text-2xl font-bold tracking-widest text-white">
+            <span class="text-xs mr-2 opacity-70 font-tech">主催</span>石川県・金沢市
+          </p>
+        </div>
+      </div>
+
+      <!-- メニューカード群 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 w-full px-4 md:px-10 mt-4 relative z-20">
+        
+        <!-- Day 1 Card -->
+        <div onclick="switchView('day1')" class="cursor-pointer cyber-kifuda p-8 group md:h-80 flex flex-col justify-between">
+          <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[var(--kaga-enji)] to-[var(--kaga-oudo)]"></div>
+          
+          <div class="mt-2">
+            <div class="flex items-start justify-between mb-2 pr-16">
+              <span class="font-fude text-5xl md:text-6xl font-bold text-[var(--kaga-enji)]">第一幕</span>
+            </div>
+            <p class="font-tech text-xs tracking-widest text-gray-500 mb-1 border-b border-dashed border-gray-300 pb-1 inline-block">Day 1: INPUT & RESEARCH</p>
+            <h2 class="text-2xl font-bold mt-2 text-[var(--color-text)]">課題発見編</h2>
+            <p class="text-base font-bold text-gray-700 mt-4 leading-relaxed bg-white/80 p-2 border-l-4 border-[var(--kaga-enji)]">データ分析や酒蔵へのヒアリングを行い、地域の課題を発見する</p>
+          </div>
+          <div class="text-right flex justify-between items-end mt-auto">
+            <span class="font-tech text-sm font-bold bg-[var(--color-text)] text-[var(--neon-oudo)] px-2 py-1 tracking-widest">2026.07.04</span>
+            <span class="text-lg font-bold text-[var(--color-text)] group-hover:text-[var(--kaga-enji)] transition-colors border-b-2 border-transparent group-hover:border-[var(--kaga-enji)]">詳細を見る ＞</span>
+          </div>
+        </div>
+
+        <!-- Day 2 Card -->
+        <div onclick="switchView('day2')" class="cursor-pointer cyber-kifuda p-8 group md:h-80 flex flex-col justify-between mt-4 md:mt-12">
+           <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[var(--kaga-ai)] to-[var(--kaga-kusa)]"></div>
+
+          <div class="mt-2">
+            <div class="flex items-start justify-between mb-2 pr-16">
+              <span class="font-fude text-5xl md:text-6xl font-bold text-[var(--kaga-ai)]">第二幕</span>
+            </div>
+            <p class="font-tech text-xs tracking-widest text-gray-500 mb-1 border-b border-dashed border-gray-300 pb-1 inline-block">Day 2: PITCH & DEMO</p>
+            <h2 class="text-2xl font-bold mt-2 text-[var(--color-text)]">課題解決編</h2>
+            <p class="text-base font-bold text-gray-700 mt-4 leading-relaxed bg-white/80 p-2 border-l-4 border-[var(--kaga-ai)]">ピッチとプロトタイプの体験会を行い、審査と投票で優秀賞を決める</p>
+          </div>
+          <div class="text-right flex justify-between items-end mt-auto">
+            <span class="font-tech text-sm font-bold bg-[var(--color-text)] text-[var(--neon-kusa)] px-2 py-1 tracking-widest">2026.09.26</span>
+            <span class="text-lg font-bold text-[var(--color-text)] group-hover:text-[var(--kaga-ai)] transition-colors border-b-2 border-transparent group-hover:border-[var(--kaga-ai)]">詳細を見る ＞</span>
+          </div>
+        </div>
+
+        <!-- About Card -->
+        <div class="md:col-span-2 mt-4 md:mt-6">
+          <div onclick="openModal('aboutModal')" class="cursor-pointer cyber-kifuda p-6 md:p-8 group flex flex-col justify-between">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[var(--kaga-oudo)] to-[var(--kaga-murasaki)]"></div>
+
+            <div class="flex flex-col md:flex-row justify-between items-center mt-2">
+              <div class="flex-grow w-full">
+                <div class="flex items-center gap-4 mb-3">
+                  <div class="w-12 h-12 bg-[var(--color-text)] text-[var(--kaga-oudo)] flex items-center justify-center font-fude text-2xl font-bold border-2 border-[var(--kaga-oudo)]">趣</div>
+                  <h2 class="font-fude text-2xl md:text-3xl font-bold text-[var(--color-text)]">日本酒 × ハッカソン とは？</h2>
+                </div>
+                <p class="text-sm font-bold text-[var(--kaga-murasaki)] border-l-2 border-[var(--kaga-murasaki)] pl-3 py-1 ml-2 tracking-widest">ハッカソンに期待すること・開催の背景</p>
+              </div>
+              <div class="text-right mt-6 md:mt-0 flex items-end">
+                <span class="text-lg font-bold text-[var(--color-text)] group-hover:text-[var(--kaga-oudo)] transition-colors border-b-2 border-[var(--color-text)] group-hover:border-[var(--kaga-oudo)] pb-1 whitespace-nowrap bg-white/80 px-2">想いを聞く</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Entry Card (参加申し込み) -->
+        <div class="md:col-span-2 mt-4">
+          <a href="https://techplay.jp/event/989316" target="_blank" rel="noopener noreferrer" class="block cursor-pointer cyber-kifuda p-6 md:p-8 group flex flex-col justify-between" style="border-color: var(--kaga-enji);">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[var(--kaga-enji)] to-[var(--neon-enji)]"></div>
+
+            <div class="flex flex-col md:flex-row justify-between items-center mt-2">
+              <div class="flex-grow w-full">
+                <div class="flex items-center gap-4 mb-3">
+                  <div class="w-12 h-12 bg-[var(--kaga-enji)] text-white flex items-center justify-center font-fude text-2xl font-bold border-2 border-[var(--kaga-enji)] group-hover:bg-white group-hover:text-[var(--kaga-enji)] transition-colors">挑</div>
+                  <h2 class="font-fude text-2xl md:text-3xl font-bold text-[var(--kaga-enji)]">挑戦者の申し込みを求む！</h2>
+                </div>
+                <p class="text-sm font-bold text-[var(--color-text)] border-l-2 border-[var(--kaga-enji)] pl-3 py-1 ml-2 tracking-widest">TECH PLAYイベントページへ遷移します</p>
+              </div>
+              <div class="text-right mt-6 md:mt-0 flex items-end">
+                <span class="text-lg font-bold text-[var(--kaga-enji)] group-hover:text-[var(--neon-enji)] transition-colors border-b-2 border-[var(--kaga-enji)] group-hover:border-[var(--neon-enji)] pb-1 whitespace-nowrap bg-white/80 px-2">いざ、参戦 ↗</span>
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <!-- その他エリア (Contact / SNS / BBS) -->
+        <div class="md:col-span-2 mt-4 flex flex-wrap justify-center gap-6 md:gap-10">
+          
+          <!-- Contact -->
+          <a href="#" onclick="event.preventDefault(); openModal('contactModal')" class="group relative w-36 h-36 md:w-44 md:h-44 bg-[var(--kaga-kusa)] border-4 border-[var(--color-text)] flex flex-col justify-center items-center hover:bg-[var(--color-text)] transition-colors duration-300 shadow-[4px_4px_0px_var(--kaga-ai)] tech-border transform rotate-2">
+            <h3 class="font-fude text-2xl font-bold mb-2 text-center w-full border-y border-dashed border-white text-white group-hover:text-[var(--kaga-kusa)] py-1">文通</h3>
+            <span class="mt-4 font-tech text-xs tracking-widest border-2 border-[var(--color-text)] px-3 py-1 font-bold bg-[var(--color-bg)] text-[var(--color-text)] group-hover:bg-[var(--neon-kusa)]">問合せはこちら</span>
+          </a>
+
+          <!-- SNS -->
+          <a href="https://note.com/ishikawa_x_tech" target="_blank" rel="noopener noreferrer" class="group relative w-36 h-36 md:w-44 md:h-44 bg-[var(--kaga-murasaki)] border-4 border-[var(--color-text)] flex flex-col justify-center items-center hover:bg-[var(--color-text)] transition-colors duration-300 shadow-[4px_4px_0px_var(--kaga-enji)] tech-border transform -rotate-1">
+            <h3 class="font-fude text-2xl font-bold mb-2 text-center w-full border-y border-dashed border-white text-white group-hover:text-[var(--kaga-murasaki)] py-1">瓦版</h3>
+            <span class="mt-4 font-tech text-xs tracking-widest border-2 border-[var(--color-text)] px-3 py-1 font-bold bg-[var(--color-bg)] text-[var(--color-text)] group-hover:bg-[var(--neon-murasaki)]">情報発信はこちら</span>
+          </a>
+
+          <!-- 掲示板 (新規) -->
+          <a href="https://kanazawa.ha4go.net/" target="_blank" rel="noopener noreferrer" class="group relative w-36 h-36 md:w-44 md:h-44 bg-[var(--kaga-ai)] border-4 border-[var(--color-text)] flex flex-col justify-center items-center hover:bg-[var(--color-text)] transition-colors duration-300 shadow-[4px_4px_0px_var(--kaga-oudo)] tech-border transform rotate-1">
+            <h3 class="font-fude text-2xl font-bold mb-2 text-center w-full border-y border-dashed border-white text-white group-hover:text-[var(--kaga-ai)] py-1">掲示板</h3>
+            <span class="mt-4 font-tech text-xs tracking-widest border-2 border-[var(--color-text)] px-3 py-1 font-bold bg-[var(--color-bg)] text-[var(--color-text)] group-hover:bg-[var(--neon-ai)]">オープンチャットはこちら</span>
+          </a>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 手前の雲レイヤー (前景) -->
+  <div class="kumo-container kumo-fg">
+    <img src="./images/cloud5.png" class="kumo cloud-5" alt="雲">
+    <img src="./images/cloud6.png" class="kumo cloud-6" alt="雲">
+    <img src="./images/cloud7.png" class="kumo cloud-7" alt="雲">
+    <img src="./images/cloud8.png" class="kumo cloud-8" alt="雲">
+  </div>
+
+  <!-- DAY VIEW CONTAINER -->
+  <div id="dayView" class="view-hidden min-h-[100dvh] pb-32 relative w-full z-20 backdrop-blur-sm bg-white/80">
+    <div class="max-w-4xl mx-auto px-4 pt-12 md:pt-16 relative z-10">
+      
+      <!-- Back Button -->
+      <button onclick="switchView('home')" class="group flex items-center gap-4 mb-12 bg-white px-4 py-2 tech-border shadow-[4px_4px_0px_var(--color-text)] hover:bg-[var(--color-text)] hover:text-white transition-colors">
+        <span class="text-xl font-tech font-bold">&lt; BACK</span>
+        <span class="text-sm font-bold tracking-widest border-l-2 border-current pl-4">表紙へ戻る</span>
+      </button>
+
+      <!-- Title Section -->
+      <div class="mb-20 mt-4 relative inline-block bg-white p-6 md:p-10 tech-border shadow-[8px_8px_0px_rgba(17,17,17,1)] w-full text-center">
+        <!-- サイバーな装飾背景 -->
+        <div class="absolute inset-2 border border-gray-200 pointer-events-none" style="background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.02) 10px, rgba(0,0,0,0.02) 20px);"></div>
+        
+        <div class="flex flex-col items-center justify-center gap-2 mb-6 mt-4 relative z-10">
+          <p id="dvId" class="font-fude text-3xl font-bold tracking-widest px-4 py-1 border-2 border-current"></p>
+          <p id="dvDate" class="font-tech text-lg font-bold text-gray-600 bg-[var(--color-bg)] px-3 py-1 border border-gray-300"></p>
+        </div>
+        <h2 id="dvTitle" class="font-tech text-3xl md:text-5xl font-bold text-[var(--color-text)] mb-4 relative z-10"></h2>
+        
+        <div class="w-full h-1 mx-auto my-6 relative z-10" id="dvLine"></div>
+        
+        <p id="dvSubtitle" class="text-lg md:text-xl font-bold tracking-widest mb-4 relative z-10"></p>
+      </div>
+
+      <!-- Timetable -->
+      <section class="mb-24 relative">
+        <div class="text-center mb-16 relative z-10">
+          <h3 class="font-fude text-4xl font-bold text-white bg-[var(--color-text)] px-8 py-3 tech-border shadow-[6px_6px_0px_var(--kaga-oudo)] inline-block">
+            時程表 <span class="text-xl font-tech ml-2 tracking-widest text-[var(--kaga-oudo)]">TIMETABLE</span>
+          </h3>
+        </div>
+        
+        <div class="relative max-w-4xl mx-auto" id="dvTimetable">
+          <!-- 中央の軸線 -->
+          <div class="absolute top-0 bottom-0 left-[24px] md:left-1/2 w-1 bg-[var(--color-text)] -translate-x-1/2 rounded-full opacity-20"></div>
+          
+          <!-- タイムライン項目がここに挿入されます -->
+        </div>
+      </section>
+
+      <!-- Presentations (Day 2 only) -->
+      <section id="dvPresentationsSection" class="mb-24 view-hidden relative z-10">
+        <div class="text-center mb-12">
+          <h3 class="font-fude text-4xl font-bold text-white bg-[var(--color-text)] px-8 py-3 tech-border shadow-[6px_6px_0px_var(--kaga-ai)] inline-block">
+            発表目録 <span class="text-xl font-tech ml-2 tracking-widest text-[var(--kaga-ai)]">PITCH_LIST</span>
+          </h3>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 md:gap-10 max-w-4xl mx-auto" id="dvPresentations">
+          <!-- チーム情報がここに挿入されます -->
+        </div>
+      </section>
+
+      <!-- Tips -->
+      <section class="relative z-10">
+        <div class="text-center mb-12">
+          <h3 class="font-fude text-4xl font-bold text-white bg-[var(--color-text)] px-8 py-3 tech-border shadow-[6px_6px_0px_var(--kaga-kusa)] inline-block transform rotate-1">
+            虎の巻 <span class="text-xl font-tech ml-2 tracking-widest text-[var(--kaga-kusa)]">TIPS</span>
+          </h3>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 w-full max-w-5xl mx-auto" id="dvTips">
+          <!-- Tipsがここに挿入されます -->
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <!-- About Modal -->
+  <div id="aboutModal" class="view-hidden fixed inset-0 z-50 flex items-center justify-center px-4 py-6 md:py-12 bg-[var(--color-text)]/80 backdrop-blur-md">
+    <div class="absolute inset-0" onclick="closeModal('aboutModal')"></div>
+    <div class="relative w-full max-w-3xl bg-white flex flex-col modal-enter tech-border p-6 md:p-12 shadow-[0_0_20px_var(--kaga-oudo)] max-h-[90vh] overflow-y-auto">
+      <div class="absolute inset-2 border-2 border-[var(--color-text)] pointer-events-none border-dashed opacity-50"></div>
+      
+      <div class="flex items-center justify-between mb-8 border-b-4 border-double border-[var(--color-text)] pb-4 relative z-10 flex-shrink-0">
+        <div>
+          <span class="text-sm font-bold text-white tracking-widest block mb-2 bg-[var(--color-text)] px-3 py-1 inline-block">ごあいさつ</span>
+          <h3 class="font-fude text-2xl md:text-4xl font-bold text-[var(--color-text)]">日本酒 × ハッカソン について</h3>
+        </div>
+        <button onclick="closeModal('aboutModal')" class="flex items-center justify-center w-12 h-12 bg-[var(--kaga-enji)] border-2 border-[var(--color-text)] hover:bg-[var(--color-text)] transition-colors group flex-shrink-0">
+          <span class="text-3xl font-tech font-bold leading-none text-white">X</span>
+        </button>
+      </div>
+      
+      <div class="flex-grow relative text-[var(--color-text)] leading-loose text-base md:text-lg z-10">
+        <p class="mb-4">
+          石川県は全国有数の酒どころ。<br>
+          伝統の蔵が醸す文化は、この地のアイデンティティそのものだ。
+        </p>
+        <p class="mb-6 bg-gray-100 p-4 border-l-4 border-[var(--kaga-enji)] text-base font-bold">
+          しかし今、担い手不足・地震被害・飲酒人口の減少など、時代の波が酒蔵産業に押し寄せている。
+        </p>
+        <p class="mb-6">
+          このハッカソンでは、蔵元が直接参加。現場のリアルな声とデータを基点に、<br>
+          エンジニア・デザイナー・学生・社会人がチームを組んで課題解決に挑む。<br>
+          <span class="font-bold text-[var(--kaga-ai)]">アプリ開発・データ可視化・生成AI・バイブコーディング―――</span><br>
+          あなたのアイデアと技術で、石川の日本酒の未来を切り開こう！<br>
+          特別な経験は不要。興味と意志があれば、学生でも社会人でも、チームでも個人でも、どなたでも参加できます。
+        </p>
+        
+        <ul class="mb-6 space-y-2 font-bold text-[var(--kaga-murasaki)] pl-2">
+          <li>・酒蔵のバックオフィス業務のDX？</li>
+          <li>・いしかわの日本酒の認知度向上アプリ？</li>
+          <li>・ゲームで日本酒を知ってもらう？</li>
+          <li>・VR・ARで異世界へ誘う？</li>
+          <li>・デジタルでの新しいブランディング？</li>
+        </ul>
+
+        <div class="mt-8 text-center md:text-right font-fude text-4xl text-[var(--kaga-enji)] tracking-widest drop-shadow-sm">いざ、醸さん！</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact Modal -->
+  <div id="contactModal" class="view-hidden fixed inset-0 z-50 flex items-center justify-center px-4 py-6 md:py-12 bg-[var(--color-text)]/80 backdrop-blur-md">
+    <div class="absolute inset-0" onclick="closeModal('contactModal')"></div>
+    <div class="relative w-full max-w-md bg-[var(--kaga-kusa)] flex flex-col modal-enter tech-border p-6 md:p-8 shadow-[0_0_15px_var(--kaga-kusa)]">
+      <div class="flex items-center justify-between mb-6 border-b-2 border-[var(--color-text)] pb-4">
+        <h3 class="text-2xl font-bold text-[var(--color-text)] bg-white px-4 py-1 border-2 border-[var(--color-text)]">文通窓口</h3>
+        <button onclick="closeModal('contactModal')" class="flex items-center justify-center w-10 h-10 bg-white border-2 border-[var(--color-text)] hover:bg-[var(--color-text)] group transition-colors">
+          <span class="text-2xl font-tech font-bold leading-none text-[var(--color-text)] group-hover:text-white">X</span>
+        </button>
+      </div>
+      <div class="flex-grow text-[var(--color-text)] leading-loose text-lg text-center py-4 bg-white border-2 border-[var(--color-text)]">
+        <p class="font-bold mb-4 bg-gray-100 py-1 mx-4 border border-dashed border-gray-400">石川県デジタル推進監室</p>
+        <p class="mb-2"><a href="mailto:e120300@pref.ishikawa.lg.jp" class="font-bold text-[var(--kaga-ai)] hover:text-[var(--kaga-enji)] transition-colors underline decoration-wavy underline-offset-4">e120300@pref.ishikawa.lg.jp</a></p>
+        <p class="pb-2"><a href="tel:076-225-1243" class="font-bold text-[var(--kaga-ai)] hover:text-[var(--kaga-enji)] transition-colors underline decoration-wavy underline-offset-4">076-225-1243</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Presentation PDF Modal -->
+  <div id="pdfModal" class="view-hidden fixed inset-0 z-50 flex items-center justify-center px-4 py-6 md:py-12 bg-[var(--color-text)]/80 backdrop-blur-md">
+    <div class="absolute inset-0" onclick="closeModal('pdfModal')"></div>
+    <div class="relative w-full max-w-5xl h-full md:h-[90vh] bg-white flex flex-col modal-enter tech-border p-2 shadow-[0_0_20px_var(--kaga-ai)]">
+      <div class="flex items-center justify-between px-4 py-3 bg-white border-b-4 border-[var(--color-text)]">
+        <div>
+          <span id="pdfModalTeamNameBadge" class="text-xs font-bold text-white bg-[var(--kaga-enji)] px-2 py-1"></span>
+          <h3 id="pdfModalTeamTitle" class="text-lg md:text-xl font-bold text-[var(--color-text)] mt-1 font-fude"></h3>
+        </div>
+        <button onclick="closeModal('pdfModal')" class="flex items-center justify-center w-10 h-10 bg-[var(--kaga-ai)] border-2 border-[var(--color-text)] hover:bg-[var(--color-text)] transition-colors group">
+          <span class="text-2xl font-tech font-bold leading-none text-white">X</span>
+        </button>
+      </div>
+      <div class="flex-grow bg-[#F9F8F4] m-2 border-2 border-dashed border-gray-600 relative flex items-center justify-center p-0 text-center overflow-hidden">
+         <!-- PDFプレビュー用 iframe -->
+         <iframe id="pdfModalIframe" src="" class="w-full h-full border-0 absolute inset-0 z-10 hidden" allow="autoplay"></iframe>
+
+         <!-- PDFがない場合のプレースホルダー -->
+         <div id="pdfModalPlaceholder" class="flex flex-col items-center justify-center text-[var(--kaga-kusa)] relative z-0 w-full max-w-lg mx-auto">
+            <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13l2 2 4-4"></path></svg>
+            <span class="text-xl mb-2 font-bold tracking-widest border border-current px-4 py-1">絵巻物（PDF）サンプル表示領域</span>
+            <p class="text-sm opacity-90 font-bold mt-2 text-[var(--color-text)]">※これはサンプル画面です。本番ではここにプレゼン資料（PDF）が表示されます。</p>
+            <p id="pdfModalTeamName" class="text-sm mt-6 bg-[var(--kaga-enji)] text-white px-4 py-1 font-bold border border-white"></p>
+         </div>
+
+         <!-- 実際の資料を開くリンク (右下フロート) -->
+         <a id="pdfModalLink" href="#" target="_blank" rel="noopener noreferrer" class="absolute bottom-4 right-4 bg-[var(--color-text)] text-white border-2 border-[var(--color-text)] px-6 py-3 font-tech font-bold hover:bg-[var(--kaga-enji)] transition-colors shadow-[4px_4px_0px_var(--color-text)] z-20">実際の資料（PDF）を開く ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Data ---
+    const daysData = {
+      day1: {
+        id: "第一幕", date: "2026.07.04 (SAT)", title: "INPUT & DEEP RESEARCH", subtitle: "【課題発見編】",
+        markerColor: "text-[var(--kaga-enji)]", hexColor: "var(--kaga-enji)",
+        programs: [
+          { time: "13:00", title: "開場・受付", desc: "受付を開始いたします。", color: "bg-[var(--kaga-oudo)]" },
+          { time: "13:30", title: "オリエンテーション", desc: "即席のチームで顔合わせと自己紹介を行います。", color: "bg-[var(--kaga-ai)]" },
+          { time: "14:00", title: "ハッカソン趣旨説明", desc: "「日本酒 × TECH HACKATHON」の目的・概要説明を行います。", color: "bg-[var(--kaga-enji)]" },
+          { time: "14:10", title: "インプット講義", desc: "日本酒が地域に果たす役割、最新の醸造、酒造における課題について専門家が語ります。", color: "bg-[var(--kaga-kusa)]" },
+          { time: "15:10", title: "DEEP RESEARCH", desc: "より理解を深めるために、チームに分かれてデータ分析・インタビュー・調査を行います。", color: "bg-[var(--kaga-murasaki)]" },
+          { time: "16:30", title: "アイデアソン・ワークショップ", desc: "「誰の・何の課題をどうやって解決できそうか」チームごとにまとめて共有します。", color: "bg-[var(--kaga-ai)]" },
+          { time: "17:00", title: "次回への申し送り", desc: "第二幕までの過ごし方の説明と、記念の集合写真撮影を行います。", color: "bg-[var(--kaga-oudo)]" }
+        ],
+        tips: [
+          // 統計データ系（藍色）
+          { 
+            title: "国税庁 統計情報", 
+            text: "都道府県別統計", 
+            type: "統計", color: "bg-[var(--kaga-ai)]", 
+            url: "https://www.nta.go.jp/publication/statistics/kokuzeicho/tokei.htm#:~:text=%E6%B6%88%E8%B2%BB%E7%A8%8E-,%E9%85%92%E7%A8%8E,-%E5%88%A9%E7%94%A8%E4%B8%8A%E3%81%AE%E6%B3%A8%E6%84%8F" 
+          },
+          { 
+            title: "農林水産省", 
+            text: "日本酒原料米について・酒造好適米等の需要量調査等", 
+            type: "統計", color: "bg-[var(--kaga-ai)]", 
+            url: "https://www.maff.go.jp/j/seisaku_tokatu/kikaku/sake.html" 
+          },
+          { 
+            title: "総務省統計局 家計調査", 
+            text: "品目別都道府県庁所在市及び政令指定都市ランキング", 
+            type: "統計", color: "bg-[var(--kaga-ai)]", 
+            url: "https://www.stat.go.jp/data/kakei/5.html" 
+          },
+          { 
+            title: "石川県酒造組合連合会", 
+            text: "公式HP（石川の酒に関する情報）", 
+            type: "情報", color: "bg-[var(--kaga-oudo)]", 
+            url: "https://www.ishikawa-sake.jp/" 
+          },
+          { 
+            title: "日本酒 蔵元・酒蔵見学検索", 
+            text: "石川県の酒蔵や酒の資料館・博物館一覧", 
+            type: "情報", color: "bg-[var(--kaga-oudo)]", 
+            url: "https://makers.japansake.or.jp/?maker=&brand=&prefecture=17" 
+          },
+          // 論文系（古代紫）
+          { 
+            title: "商学論集 第90巻 (2022)", 
+            text: "日本酒の市販酒成分調査に基づく地域特性の一考察", 
+            type: "論文", color: "bg-[var(--kaga-murasaki)]", 
+            url: "https://www.lib.fukushima-u.ac.jp/repo/repository/fukuro/R000005818/3-1942.pdf" 
+          },
+          { 
+            title: "日本フードツーリズム学会誌 (2024)", 
+            text: "発酵ツーリズムから生まれるまちづくりに関する一考察", 
+            type: "論文", color: "bg-[var(--kaga-murasaki)]", 
+            url: "https://www.jstage.jst.go.jp/article/nftj/2024/3/2024_2/_article/-char/ja/" 
+          },
+          { 
+            title: "北陸作物学会報 45巻 (2010)", 
+            text: "酒造好適米品種「石川酒52号」の育成", 
+            type: "論文", color: "bg-[var(--kaga-murasaki)]", 
+            url: "https://www.jstage.jst.go.jp/article/hokurikucs/45/0/45_KJ00006396419/_article/-char/ja/" 
+          },
+          { 
+            title: "JOURNAL OF THE BREWING SOCIETY (2009)", 
+            text: "日本酒市場の問題点―飲食市場と家庭市場の日本酒―", 
+            type: "論文", color: "bg-[var(--kaga-murasaki)]", 
+            url: "https://www.jstage.jst.go.jp/article/jbrewsocjapan/104/11/104_838/_article" 
+          },
+          { 
+            title: "商学論集 第85巻 (2017)", 
+            text: "日本酒の消費量減少の規定要因分析に基づく販売戦略の考察", 
+            type: "論文", color: "bg-[var(--kaga-murasaki)]", 
+            url: "https://www.lib.fukushima-u.ac.jp/repo/repository/fukuro/R000004998/3-1889.pdf" 
+          },
+          { 
+            title: "日本国際観光学会論文集 32巻 (2025)", 
+            text: "新潟産日本酒の海外における 地域ブランド化の推進に係る考察", 
+            type: "論文", color: "bg-[var(--kaga-murasaki)]", 
+            url: "https://www.jstage.jst.go.jp/article/jafit/32/0/32_75/_article/-char/ja/" 
+          }
+        ]
+      },
+      day2: {
+        id: "第二幕", date: "2026.09.26 (SAT)", title: "PITCH & PROJECT DEMO", subtitle: "【課題解決編】",
+        markerColor: "text-[var(--kaga-ai)]", hexColor: "var(--kaga-ai)",
+        programs: [
+          { time: "12:00", title: "開場・受付", desc: "受付を開始いたします。", color: "bg-[var(--kaga-ai)]" },
+          { time: "12:30", title: "登壇者打ち合わせ", desc: "発表者向けの説明会を行います。", color: "bg-[var(--kaga-oudo)]" },
+          { time: "13:00", title: "開会の辞", desc: "第二幕全体の流れを説明します。", color: "bg-[var(--kaga-enji)]" },
+          { time: "13:10", title: "Pitch! 発表会", desc: "チームごとに練り上げたアイデアのプレゼンテーションを行います。", color: "bg-[var(--kaga-kusa)]" },
+          { time: "14:20", title: "Touch! 体験会", desc: "チームごとにブース（出店）を設け、プロトタイプの体験会を行います。", color: "bg-[var(--kaga-ai)]" },
+          { time: "16:30", title: "投票締め切り", desc: "会場からの投票を締め切ります。", color: "bg-[var(--kaga-enji)]" },
+          { time: "16:30", title: "審査発表・表彰", desc: "審査員による講評および、各賞・大賞を発表します。", color: "bg-[var(--kaga-oudo)]" },
+          { time: "17:30", title: "閉会の辞", desc: "総括と、喜びの記念撮影を行います。", color: "bg-[var(--kaga-murasaki)]" }
+        ],
+        tips: [
+          { title: "資料テンプレート", text: "ピッチ資料作成の型（ひな形）と過去の優秀作品", type: "手本", color: "bg-[var(--kaga-oudo)]", url: "" },
+          { title: "IoTカタログ", text: "プロトタイピングに役立つIoTモジュール・センサー一覧", type: "道具", color: "bg-[var(--kaga-kusa)]", url: "" },
+          { title: "審査・メンタリング", text: "審査の基準と助言（メンタリング）日程", type: "掟", color: "bg-[var(--kaga-enji)]", url: "" }
+        ],
+        teams: [
+          { 
+            id: "1",
+            name: "チームサンプル 1", 
+            title: "（サンプル）VR酒蔵体験 in 櫻田酒造", 
+            desc: "VR空間で時空を超えた杜氏の“想い”を体験し、ファンを作る。購買に繋げる。", 
+            bg: "bg-[var(--kaga-enji)]",
+            link: "https://drive.google.com/file/d/1JVY12Wk1x8MQOvJ4p5CGvesXR__CN-kz/view?usp=sharing",
+            embedLink: "https://drive.google.com/file/d/1JVY12Wk1x8MQOvJ4p5CGvesXR__CN-kz/preview"
+          },
+          { 
+            id: "2",
+            name: "チームサンプル 2", 
+            title: "（サンプル）VR酒蔵体験 in 櫻田酒造", 
+            desc: "VR空間で時空を超えた杜氏の“想い”を体験し、ファンを作る。購買に繋げる。", 
+            bg: "bg-[var(--kaga-ai)]",
+            link: "https://drive.google.com/file/d/1JVY12Wk1x8MQOvJ4p5CGvesXR__CN-kz/view?usp=sharing",
+            embedLink: "https://drive.google.com/file/d/1JVY12Wk1x8MQOvJ4p5CGvesXR__CN-kz/preview"
+          }
+        ]
+      }
+    };
+
+    // --- Initialization ---
+    document.addEventListener('DOMContentLoaded', () => {
+      initRotatingPhotos();
+      initDigitalRain();
+      setupIntersectionObserver();
+    });
+
+    // スプラッシュ画面を閉じてメインアプリを開始
+    function startApp() {
+      const splash = document.getElementById('splashView');
+      const body = document.getElementById('mainBody');
+      
+      // スクロール位置を強制的にトップへリセット
+      window.scrollTo(0, 0);
+
+      // ボタン連打防止
+      splash.style.pointerEvents = 'none';
+      splash.style.opacity = '0';
+      
+      // スクロールを許可
+      body.classList.remove('overflow-hidden');
+
+      // フェードアウト後に非表示にし、スクロールアニメーションをトリガー
+      setTimeout(() => {
+        splash.classList.add('view-hidden');
+        window.scrollTo(0, 0); // 念のため非表示後にもリセット
+        setupIntersectionObserver();
+      }, 1000);
+    }
+
+    // --- デジタルレイン生成 (マトリックス風背景) ---
+    function initDigitalRain() {
+      const container = document.getElementById('digitalRain');
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789酒蔵醸造米麹水酵母';
+      const columns = Math.floor(window.innerWidth / 30);
+      
+      for(let i = 0; i < columns; i++) {
+        const div = document.createElement('div');
+        div.className = 'rain-column';
+        div.style.left = `${i * 30 + Math.random()*10}px`;
+        div.style.animationDuration = `${Math.random() * 5 + 3}s`;
+        div.style.animationDelay = `${Math.random() * 5}s`;
+        
+        let text = '';
+        const len = Math.floor(Math.random() * 10) + 5;
+        for(let j=0; j<len; j++) {
+          text += chars[Math.floor(Math.random() * chars.length)] + '<br>';
+        }
+        div.innerHTML = text;
+        container.appendChild(div);
+      }
+    }
+
+    // --- Background Photos (アートスニペット要素) ---
+    function initRotatingPhotos() {
+      const container = document.getElementById('rotatingPhotosContainer');
+      const colors = ['var(--kaga-enji)', 'var(--kaga-ai)', 'var(--kaga-oudo)', 'var(--kaga-kusa)', 'var(--kaga-murasaki)'];
+      for (let i = 0; i < 5; i++) {
+        const angle = (i * 360) / 5;
+        const translateY = window.innerWidth >= 768 ? '-450px' : '-280px';
+        const randomRot = (i % 2 === 0 ? 1 : -1) * (15 + (i * 10));
+        
+        const photoDiv = document.createElement('div');
+        photoDiv.className = 'absolute bg-[var(--color-bg)] p-1 border-2 border-[var(--color-text)] shadow-[4px_4px_0px_var(--color-text)] mix-blend-multiply opacity-70';
+        photoDiv.style.cssText = `
+          top: 50%; left: 50%; width: 80px; height: 80px;
+          transform: translate(-50%, -50%) rotate(${angle}deg) translateY(${translateY}) rotate(-${angle}deg) rotate(${randomRot}deg);
+        `;
+        photoDiv.innerHTML = `
+          <div class="w-full h-full flex items-center justify-center overflow-hidden relative" style="border: 1px dashed ${colors[i]}">
+            <span class="font-tech text-xs text-[var(--color-text)] font-bold z-10 opacity-50 transform ${i%2===0 ? 'rotate-90' : '-rotate-90'}">DATA_${i}</span>
+          </div>
+        `;
+        container.appendChild(photoDiv);
+      }
+    }
+
+    // --- View Navigation & Rendering ---
+    function switchView(viewName) {
+      // 画面切り替え時は瞬時にトップへ戻す（smoothだとズレる場合があるため）
+      window.scrollTo(0, 0);
+      
+      document.getElementById('homeView').classList.add('view-hidden');
+      document.getElementById('dayView').classList.add('view-hidden');
+      
+      document.querySelectorAll('.fade-in-scroll').forEach(el => el.classList.remove('visible'));
+
+      if (viewName === 'home') {
+        document.getElementById('homeView').classList.remove('view-hidden');
+      } else {
+        renderDayView(viewName);
+        document.getElementById('dayView').classList.remove('view-hidden');
+      }
+      
+      // DOM書き換え後にもう一度トップへ固定
+      window.scrollTo(0, 0);
+      
+      setTimeout(setupIntersectionObserver, 100);
+    }
+
+    function renderDayView(dayKey) {
+      const data = daysData[dayKey];
+      
+      // Header
+      document.getElementById('dvId').textContent = data.id;
+      document.getElementById('dvId').style.borderColor = data.hexColor;
+      document.getElementById('dvId').style.color = data.hexColor;
+      document.getElementById('dvDate').textContent = data.date;
+      document.getElementById('dvTitle').textContent = data.title;
+      document.getElementById('dvSubtitle').textContent = data.subtitle;
+      document.getElementById('dvSubtitle').style.color = data.hexColor;
+      document.getElementById('dvLine').style.backgroundColor = data.hexColor;
+
+      // Timetable
+      const ttContainer = document.getElementById('dvTimetable');
+      Array.from(ttContainer.children).forEach(child => {
+        if (!child.classList.contains('absolute')) ttContainer.removeChild(child);
+      });
+      
+      data.programs.forEach((prog, idx) => {
+        const isEven = idx % 2 === 0;
+        
+        const flexRowClass = isEven ? 'md:flex-row' : 'md:flex-row-reverse';
+        const contentWidthClass = 'w-full pl-[60px] md:w-1/2 md:px-12';
+        const textSideClass = isEven ? 'md:text-right' : 'md:text-left';
+        const itemAlignClass = isEven ? 'md:items-end' : 'md:items-start';
+
+        const html = `
+          <div class="fade-in-scroll relative mb-12 flex flex-col ${flexRowClass} w-full">
+            
+            <!-- マーカー -->
+            <div class="absolute top-6 left-[24px] md:left-1/2 w-6 h-6 -translate-x-1/2 z-20">
+              <div class="w-full h-full ${prog.color} border-2 border-[var(--color-text)] transform rotate-45 shadow-[2px_2px_0px_rgba(0,0,0,1)]"></div>
+            </div>
+            
+            <!-- コンテンツ -->
+            <div class="${contentWidthClass} ${textSideClass} relative">
+              <div class="bg-white p-6 tech-border shadow-[4px_4px_0px_var(--color-text)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_var(--color-text)] transition-all duration-300 relative overflow-hidden group">
+                
+                <div class="flex flex-col gap-1 mb-2 items-start ${itemAlignClass} relative z-10">
+                  <span class="font-tech text-sm font-bold px-2 py-1 border border-current inline-block ${prog.color} text-white shadow-[2px_2px_0px_var(--color-text)]">${prog.time}</span>
+                  <h4 class="text-xl md:text-2xl font-bold text-[var(--color-text)] mt-3">${prog.title}</h4>
+                </div>
+                <p class="text-gray-700 leading-relaxed text-sm md:text-base font-bold relative z-10">${prog.desc}</p>
+                
+                <!-- ホバー時の装飾 -->
+                <div class="absolute bottom-0 left-0 w-0 h-1 ${prog.color} group-hover:w-full transition-all duration-500"></div>
+              </div>
+            </div>
+          </div>
+        `;
+        ttContainer.insertAdjacentHTML('beforeend', html);
+      });
+
+      // Presentations
+      const presSection = document.getElementById('dvPresentationsSection');
+      const presContainer = document.getElementById('dvPresentations');
+      presContainer.innerHTML = '';
+      
+      if (data.teams) {
+        presSection.classList.remove('view-hidden');
+        data.teams.forEach((team) => {
+          const teamStr = JSON.stringify(team).replace(/"/g, '&quot;');
+          const html = `
+            <div onclick="openPdfModal(${teamStr})" class="cursor-pointer bg-white p-6 md:p-8 tech-border shadow-[6px_6px_0px_var(--color-text)] hover:-translate-y-1 transition-transform duration-300 h-full flex flex-col group relative">
+              <!-- ラベル風シール -->
+              ${team.id ? `<div class="absolute -top-4 -left-4 w-12 h-12 ${team.bg} flex items-center justify-center font-bold text-white text-xl shadow-[2px_2px_0px_var(--color-text)]" style="clip-path: polygon(25% 0%, 100% 0%, 75% 100%, 0% 100%); transform: rotate(-10deg);">
+                ${team.id}
+              </div>` : ''}
+
+              <div class="flex items-center justify-between mb-4 mt-2">
+                <span class="font-bold border border-current px-2 py-0.5 text-xs tracking-widest bg-[var(--color-bg)] text-[var(--color-text)]">${team.name}</span>
+              </div>
+              <h4 class="text-xl md:text-2xl font-bold mb-3 border-b-2 border-dotted border-current pb-3">${team.title}</h4>
+              <p class="text-sm md:text-base leading-relaxed mt-auto font-bold opacity-90">${team.desc}</p>
+              
+              <div class="mt-6 text-right">
+                <span class="text-sm font-bold tracking-widest bg-white text-[var(--color-text)] border border-[var(--color-text)] px-3 py-1 group-hover:bg-[var(--kaga-oudo)] transition-colors">絵巻を開く ↗</span>
+              </div>
+            </div>
+          `;
+          presContainer.insertAdjacentHTML('beforeend', html);
+        });
+      } else {
+        presSection.classList.add('view-hidden');
+      }
+
+      // Tips
+      const tipsContainer = document.getElementById('dvTips');
+      tipsContainer.innerHTML = '';
+      data.tips.forEach((tip, idx) => {
+        const delay = (idx % 6) * 100;
+        const html = `
+          <div class="fade-in-scroll h-full" style="transition-delay: ${delay}ms">
+            <a href="${tip.url || '#'}" ${tip.url ? 'target="_blank" rel="noopener noreferrer"' : 'onclick="event.preventDefault()"'} class="group relative w-full h-full min-h-[140px] bg-[var(--color-bg)] tech-border flex flex-col justify-between p-5 md:p-6 hover:-translate-y-1 transition-transform duration-300 shadow-[4px_4px_0px_var(--color-text)]">
+              
+              <!-- 角のアクセント -->
+              <div class="absolute top-0 right-0 w-8 h-8 ${tip.color} opacity-80" style="clip-path: polygon(100% 0, 0 0, 100% 100%);"></div>
+
+              <div class="relative z-10 pr-4">
+                ${tip.title ? `<h4 class="font-fude text-lg md:text-xl font-bold text-[var(--color-text)] mb-2 border-b border-dashed border-gray-400 pb-1">${tip.title}</h4>` : ''}
+                <p class="font-bold text-sm md:text-base leading-relaxed text-[var(--color-text)]">${tip.text}</p>
+              </div>
+              
+              <div class="flex justify-between items-end mt-4 relative z-10">
+                <span class="text-xs font-bold border border-[var(--color-text)] bg-white text-[var(--color-text)] px-2 py-0.5">${tip.type}</span>
+                <span class="text-xl font-bold text-[var(--color-text)] group-hover:text-[var(--kaga-enji)] transition-colors">↗</span>
+              </div>
+            </a>
+          </div>
+        `;
+        tipsContainer.insertAdjacentHTML('beforeend', html);
+      });
+    }
+
+    // --- Modals ---
+    function openModal(modalId) {
+      document.getElementById(modalId).classList.remove('view-hidden');
+    }
+    
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.add('view-hidden');
+      if (modalId === 'pdfModal') {
+        const iframeEl = document.getElementById('pdfModalIframe');
+        if (iframeEl) iframeEl.src = ""; // iframeの読み込みを停止・リセット
+      }
+    }
+    
+    function openPdfModal(teamData) {
+      document.getElementById('pdfModalTeamNameBadge').textContent = teamData.name;
+      document.getElementById('pdfModalTeamTitle').textContent = teamData.title;
+
+      const linkEl = document.getElementById('pdfModalLink');
+      const iframeEl = document.getElementById('pdfModalIframe');
+      const placeholderEl = document.getElementById('pdfModalPlaceholder');
+
+      // リンクが設定されている場合
+      if (teamData.link) {
+        linkEl.href = teamData.link;
+        linkEl.style.display = 'inline-block';
+        
+        // embedLink（埋め込み用プレビューURL）があればiframeを表示
+        if (teamData.embedLink) {
+          iframeEl.src = teamData.embedLink;
+          iframeEl.classList.remove('hidden');
+          if (placeholderEl) placeholderEl.classList.add('hidden');
+        } else {
+          // なければプレースホルダーを表示
+          iframeEl.classList.add('hidden');
+          iframeEl.src = "";
+          if (placeholderEl) placeholderEl.classList.remove('hidden');
+        }
+      } else {
+        // リンクが一切ない場合
+        linkEl.style.display = 'none';
+        iframeEl.classList.add('hidden');
+        iframeEl.src = "";
+        if (placeholderEl) placeholderEl.classList.remove('hidden');
+      }
+
+      openModal('pdfModal');
+    }
+
+    // --- Scroll Animations ---
+    function setupIntersectionObserver() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            if (entry.target.classList.contains('fade-in-scroll')) {
+              entry.target.classList.add('visible');
+            }
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.fade-in-scroll').forEach(el => {
+        observer.observe(el);
+      });
+    }
+  </script>
+</body>
+</html>
